@@ -1,0 +1,20 @@
+{% extends "questions/base.html" %}
+{% block title %} Home {% endblock %}
+{% block body %}
+<div class="container">
+    {% for question in questions_list %}
+        <form action="{% url 'questions:answerdetails' question.id %}">
+            <div class="list-group my-2" id={{question.id}}>
+                <button type="submit" class="list-group-item list-group-item-action" id={{question.id}} aria-current="true">
+                    <div class="d-flex w-100 justify-content-between">
+                      <h5 class="mb-1">{{ question.question }}</h5>
+                      <small>{{question.created}}</small>
+                    </div>
+                    <p class="mb-1">Posted by - {{ question.get_display_name }}</p>
+                    <small><span class="badge bg-danger rounded-pill">{{ question.tag }}</span></small>
+                </button>
+            </div>
+        </form>
+    {% endfor %}
+</div>
+{% endblock %}

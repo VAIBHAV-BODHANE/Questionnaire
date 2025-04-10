@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+.env
+
+# Media files (user uploads)
+media/
+answers/images/
+
+# Static files (collected)
+staticfiles/
+static/
+
+# VSCode / PyCharm etc
+.vscode/
+.idea/
+
+# Environment files
+.env
+*.env
+
+# Pipenv / poetry
+Pipfile.lock
+poetry.lock

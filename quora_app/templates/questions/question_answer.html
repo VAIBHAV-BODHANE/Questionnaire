@@ -1,0 +1,140 @@
+{% extends "questions/base.html" %}
+{% block title %} Home {% endblock %}
+{% block style %} 
+.vote-active {
+    color: !importantdodgerblue;
+}
+{% endblock %}
+{% block body %}
+<div class="d-grid gap-2 d-md-flex justify-content-center">
+    <div class="card w-75 my-2">
+        <div class="card-body">
+            <h5 class="card-title">{{ question_data.question }}</h5>
+            <p class="card-text"></p>
+            <div class="d-grid gap-2 d-md-flex justify-content-between">
+                <div class="justify-content-md-start">
+                    <blockquote class="blockquote mb-0">
+                        <p>Tags</p>
+                        <footer class="blockquote-footer"><span class="badge bg-danger rounded-pill">{{ question_data.tag }}</span></footer>
+                    </blockquote>
+                </div>
+                <div class="justify-content-md-end">
+                    <div class="block"> 
+                        <p class="mb-1">Posted by - {{ question_data.get_display_name }}</p>
+                        <p class="mb-1">{{ question_data.created }}</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <img src="{{ question_data.question_attachment.url }}" width="800rem" class="my-3"/>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container w-75 my-2">
+    <blockquote class="blockquote mb-0">
+        <footer class="blockquote-footer">Comments ({{ answer_list_len }})</footer>
+    </blockquote>
+</div>
+<div class="d-grid gap-5 col-9 mx-auto">
+    <button class="btn btn-outline-success" type="button" data-bs-toggle="modal" data-bs-target="#commentBackdrop">Add Comment</button>
+    <div class="modal fade" id="commentBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="commentBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="commentBackdropLabel">Add Comment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="row g-3" method="POST" action="{% url 'questions:add_answer' question_data.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="col-12">
+                          <label for="inputQuestion" class="form-label">Comment</label>
+                          <textarea rows="3" class="form-control" name="answer" id="inputQuestion" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="formFileMultiple2" class="form-label">Attachments</label>
+                            <input class="form-control" type="file" name="answer_attachment" id="formFileMultiple2" multiple>
+                        </div>
+                        <div class="col-12 d-grid gap-2 d-md-flex justify-content-md-end">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          <button type="submit" class="btn btn-success">Add</button>
+                        </div>
+                        <input class="visually-hidden form-control" value={{question_data.id}} name="question"></input>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% for current_vote, answer in answer_list %}
+<div class="d-grid gap-2 d-md-flex justify-content-center">
+    <div class="card w-75 my-2">
+        <div class="card-body">
+            <p class="card-text">{{ answer.answer }}</p>
+            <img src="{{ answer.answer_attachment.url }}" width="800rem" class="my-3"/>
+            <div class="d-grid gap-2 d-md-flex justify-content-between">
+                <div class="justify-content-md-start vote-count">
+                    <a type="button" class="vote-btn text-decoration-none text-dark" data-vote_value="up_add" data-id="{{ answer.id }}">
+                        <i class="fa fa-thumbs-o-up mx-2 vote-icon" style="font-size:32px; {% if current_vote == True %} color: dodgerblue;{% endif %}"></i>
+                        <span class="up-vote-count">{{ answer.upvotecount }}</span>
+                    </a>
+                    <a type="button" class="vote-btn text-decoration-none text-dark" data-vote_value="down_add" data-id="{{ answer.id }}">
+                        <i class="fa fa-thumbs-o-down mx-2 vote-icon" style="font-size:32px; {% if current_vote == False %} color: dodgerblue;{% endif %}"></i>
+                        <span class="down-vote-count">{{ answer.downvotecount }}</span>
+                    </a>
+                </div>
+                <div class="justify-content-md-end">
+                    <div class="block"> 
+                        <p class="mb-1">Posted by - {{ answer.user.username }}</p>
+                        <p class="mb-1">{{ answer.created }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block script %}
+<script>
+    document.querySelectorAll('.vote-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log(this.dataset)
+            const answerId = this.dataset.id;
+            const formData = new FormData();
+            formData.append('vote_value', this.dataset.vote_value)
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+            fetch(`/questionnaire/answer_vote/${answerId}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                const parent = this.closest('.vote-count');
+
+                if (parent) {
+                    const upVoteSpan = parent.querySelector('.up-vote-count');
+                    const downVoteSpan = parent.querySelector('.down-vote-count');
+
+                    if (upVoteSpan) upVoteSpan.textContent = data.upvotes;
+                    if (downVoteSpan) downVoteSpan.textContent = data.downvotes;
+                }
+
+                parent.querySelectorAll('.vote-icon').forEach(icon => {
+                icon.style.color = '';
+                });
+
+                const icon = this.querySelector('.vote-icon');
+                if (icon) {
+                    icon.style.color = 'dodgerblue';
+                }
+
+            });
+        });
+    });
+</script>
+{% endblock %}vote-count
